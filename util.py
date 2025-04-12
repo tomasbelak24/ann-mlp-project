@@ -13,6 +13,55 @@ import os
 import time
 import functools
 
+def load_data(file_path):
+    label_map = {'A': 0, 'B': 1, 'C': 2}
+    data = np.genfromtxt(file_path, dtype=[('x', float), ('y', float), ('label', 'U1')])[1:]
+    inputs = np.array([[row[0], row[1]] for row in data]).T
+    labels = np.array([label_map[row[2]] for row in data])
+    return inputs, labels
+
+
+def plot_confusion_matrix(y_true, y_pred, labels=None, title="Confusion Matrix", cmap="viridis", block=True, filename=None):
+    """
+    Plots a confusion matrix using numpy and matplotlib.
+
+    Args:
+        y_true (array-like): Ground truth labels.
+        y_pred (array-like): Predicted labels.
+        labels (list, optional): List of label names. Defaults to None.
+        title (str, optional): Title of the plot. Defaults to "Confusion Matrix".
+        cmap (str, optional): Colormap for the plot. Defaults to "viridis".
+    """
+    num_classes = 3
+    cm = np.zeros((num_classes, num_classes), dtype=int)
+    for t, p in zip(y_true, y_pred):
+        cm[t, p] += 1
+
+    # Plot confusion matrix
+    plt.figure(figsize=(8, 6))
+    plt.imshow(cm, interpolation="nearest", cmap=cmap)
+    plt.colorbar()
+    plt.title(title)
+    plt.xlabel("Predicted Label")
+    plt.ylabel("True Label")
+
+    if labels:
+        plt.xticks(np.arange(len(labels)), labels, rotation=45)
+        plt.yticks(np.arange(len(labels)), labels)
+    else:
+        plt.xticks(np.arange(num_classes))
+        plt.yticks(np.arange(num_classes))
+
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            plt.text(j, i, cm[i, j], ha="center", va="center", color="white" if cm[i, j] > cm.max() / 2 else "black")
+
+    plt.tight_layout()
+
+    if filename:
+        plt.savefig(filename, bbox_inches='tight')
+        print(f"Confusion matrix saved to {filename}")
+    plt.show(block=block)
 
 # # Utilities
 def onehot_decode(inp):
@@ -174,7 +223,7 @@ def plot_both_errors(trainCEs, trainREs, testCE=None, testRE=None, pad=None, blo
 
 
 def plot_dots(inputs, labels=None, predicted=None, test_inputs=None, test_labels=None, test_predicted=None, s=60, i_x=0,
-              i_y=1, title=None, block=True):
+              i_y=1, title=None, block=True, filename = None):
     plt.figure(title or 3)
     use_keypress()
     plt.clf()
@@ -231,6 +280,10 @@ def plot_dots(inputs, labels=None, predicted=None, test_inputs=None, test_labels
     if title is not None:
         plt.gcf().canvas.manager.set_window_title(title)
     plt.tight_layout()
+    
+    if filename:
+        plt.savefig(filename, bbox_inches='tight')
+    
     plt.show(block=block)
 
 
