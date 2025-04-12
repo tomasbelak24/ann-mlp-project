@@ -17,7 +17,13 @@ class MLPClassifier(MLP):
         Cost / loss / error function
         """
 
-        return np.sum((targets - outputs)**2, axis=0)
+        if self.output_activation == 'softmax':
+            epsilon = 1e-12
+            outputs = np.clip(outputs, epsilon, 1. - epsilon)
+            return -np.sum(targets * np.log(outputs)) / targets.shape[0]
+        else:
+            return np.sum((targets - outputs)**2, axis=0)
+        
 
     def get_function(self, activation, derivative=False):
             if activation == 'sigmoid':
@@ -38,7 +44,7 @@ class MLPClassifier(MLP):
                     return lambda x: np.maximum(0, x)
             elif activation == 'softmax':
                 if derivative:
-                    raise NotImplementedError("Use softmax with cross-entropy combo instead.")
+                    raise NotImplementedError(" Pouzivaj softmax len ako output activation funkciuUse softmax with cross-entropy combo instead.")
                 else:
                     return lambda x: np.exp(x) / np.sum(np.exp(x), axis=0)
             elif activation == 'linear':
@@ -71,9 +77,9 @@ class MLPClassifier(MLP):
         """
 
         # If self.forward() can process only one input at a time
-        #outputs = np.stack([self.forward(x)[-1] for x in inputs.T]).T
+        outputs = np.stack([self.forward(x)[-1] for x in inputs.T]).T
         # # If self.forward() can take a whole batch
-        *_, outputs = self.forward(inputs)
+        #*_, outputs = self.forward(inputs)
         return outputs, onehot_decode(outputs)
 
     def test(self, inputs, labels):
@@ -119,7 +125,7 @@ class MLPClassifier(MLP):
                 d = targets[:, idx]
 
                 a, h, b, y = self.forward(x)
-                dW_hid, dW_out = self.backward(x, a, h, b, y, d)
+                dW_hid, dW_out = self.backward(x, a, h, b, y, d, softmax_plus_ce=self.output_activation == 'softmax')
 
                 self.W_hid += alpha * dW_hid
                 self.W_out += alpha * dW_out
@@ -131,7 +137,7 @@ class MLPClassifier(MLP):
             RE /= count
             CEs.append(CE)
             REs.append(RE)
-            if (ep+1) % 5 == 0: print('Epoch {:3d}/{}, CE = {:6.2%}, RE = {:.5f}'.format(ep+1, eps, CE, RE))
+            if (ep+1) % 100 == 0: print('Epoch {:3d}/{}, CE = {:6.2%}, RE = {:.5f}'.format(ep+1, eps, CE, RE))
 
             if live_plot and ((ep+1) % live_plot_interval == 0):
                 _, predicted = self.predict(inputs)
