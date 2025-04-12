@@ -84,6 +84,7 @@ seen_configs = set()
 best_model_i = None
 
 keys = list(hyperparams.keys())
+grid_search_start_time = time.time()
 
 with open("all_model_results.csv", "w", newline="") as f:
     writer = csv.writer(f)
@@ -137,6 +138,9 @@ with open("all_model_results.csv", "w", newline="") as f:
             best_model = model
             best_params = hp
             best_model_i = i_model
+
+grid_search_elapsed_time = time.time() - grid_search_start_time
+print(f"Total grid search time: {grid_search_elapsed_time:.3f} seconds")
 
 with open("best_model_params.json", "w") as f:
     json.dump({best_model_i: best_params}, f, indent=4)
