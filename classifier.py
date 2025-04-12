@@ -86,7 +86,7 @@ class MLPClassifier(MLP):
         RE = np.mean(self.error(targets, outputs))
         return CE, RE
 
-    def train(self, inputs, labels, alpha=0.1, eps=100, live_plot=False, live_plot_interval=10):
+    def train(self, inputs, labels, val_inputs = None, val_labels = None, alpha=0.1, eps=100, early_stopping = False, patience = 10, live_plot=False, live_plot_interval=10):
         """
         Training of the classifier
         inputs: matrix of input vectors (each column is one input vector)
@@ -104,6 +104,10 @@ class MLPClassifier(MLP):
 
         CEs = []
         REs = []
+
+        best_val_CE = float('inf')
+        best_weights = None
+        no_improve_count = 0
 
         for ep in range(eps):
             CE = 0
@@ -134,6 +138,24 @@ class MLPClassifier(MLP):
                 plot_both_errors(CEs, REs, block=False)
                 plot_areas(self, inputs, block=False)
                 redraw()
+
+            if early_stopping:
+                val_CE, _ = self.test(val_inputs, val_labels)
+
+                if val_CE < best_val_CE:
+                    best_val_CE = val_CE
+                    no_improve_count = 0
+                    best_weights = (self.W_hid.copy(), self.W_out.copy())
+                else:
+                    no_improve_count += 1
+            
+                if no_improve_count >= patience:
+                    print(f"stopped early at epoch {ep+1} (patience = {patience} epochs)")
+                    break
+
+        
+        if early_stopping and best_weights is not None:
+            self.W_hid, self.W_out = best_weights
 
         if live_plot:
             interactive_off()

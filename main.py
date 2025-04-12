@@ -59,6 +59,7 @@ hyperparams = {
     'output_activation': ACTIVATION_FUNCTIONS,
     'sparsity': [0.1, 0.2, 0.3],
     'weight_scale': [0.1, 0.5, 1.0, 2.0],
+    'patience': [5, 10, 15, None]
 }
 
 best_val_CE = float('inf')
@@ -79,6 +80,8 @@ for i_model, values in enumerate(product(*hyperparams.values())):
         continue
     seen_configs.add(hp_key)
 
+    use_early_stopping = hp['patience'] is not None
+    patience = hp['patience'] if use_early_stopping else 0
     
     x_train = (train_inputs - mean) / std if hp['normalize'] else train_inputs
     x_val = (val_inputs - mean) / std if hp['normalize'] else val_inputs
@@ -87,7 +90,7 @@ for i_model, values in enumerate(product(*hyperparams.values())):
     model = MLPClassifier(dim_in=x_train.shape[0], dim_hid=hp['dim_hid'], n_classes=np.max(train_labels)+1, weight_init=hp['weight_init'],
                           hidden_activation=hp['hidden_activation'], output_activation=hp['output_activation'], sparsity=hp['sparsity'], weight_scale=hp['weight_scale'])
     
-    train_CEs, train_REs = model.train(x_train, train_labels, alpha=hp['alpha'], eps=hp['eps'], live_plot=False)
+    train_CEs, train_REs = model.train(x_train, train_labels, val_inputs=x_val if use_early_stopping else None, val_labels=val_labels if use_early_stopping else None, alpha=hp['alpha'], eps=hp['eps'],early_stopping=use_early_stopping, patience=patience, live_plot=False)
 
     val_CE, val_RE = model.test(x_val, val_labels)
     results.append((hp, train_CEs[-1], train_REs[-1], val_CE, val_RE))
