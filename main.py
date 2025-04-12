@@ -7,12 +7,12 @@ import csv
 
 random.seed(24)
 np.random.seed(24)
+show_graphs = True
 
 inputs, labels = load_data('data/2d.trn.dat')
-print(labels)
+#print(labels)
 mean = np.mean(inputs, axis=1, keepdims=True)
 std = np.std(inputs, axis=1, keepdims=True)
-
 
 (dim, count) = inputs.shape
 #print(inputs.shape)
@@ -39,14 +39,14 @@ val_labels = labels[val_indices]
 #print("Train inputs shape:", train_inputs.shape) # (6400, 2)
 #print("Train labels shape:", train_labels.shape) # (6400, 3)
 
-#plot_dots(train_inputs, train_labels, None, None, None, None, block=False, filename='plots/train_data.png')
-#plot_dots(None, None, None, val_inputs, val_labels, None, block=False, filename='plots/val_data.png')
+#plot_dots(train_inputs, int2str_labels(train_labels), None, None, None, None, block=False, filename='plots/train_data.png', show=False)
+#plot_dots(None, None, None, val_inputs, int2str_labels(val_labels), None, block=False, filename='plots/val_data.png', show=False)
 
 
 hyperparams = {
     'dim_hid': [10,],
     'alpha': [0.01,],
-    'eps': [400,],
+    'eps': [200,],
     'normalize': [True, False],
     'weight_init': ['normal_dist', 'uniform', 'sparse'],
     'hidden_activation': ['sigmoid', 'tanh', 'relu'],
@@ -60,14 +60,14 @@ hyperparams = {
 hyperparams = {
     'dim_hid': [10,],
     'alpha': [0.01,],
-    'eps': [50,],
+    'eps': [10,],
     'normalize': [True],
-    'weight_init': ['sparse',],
+    'weight_init': ['normal_dist',],
     'hidden_activation': ['sigmoid',],
     'output_activation': ['softmax',],
-    'sparsity': [0.1, 0.2],
+    'sparsity': [0.2],
     'weight_scale': [1.0, ],
-    'patience': [None, 5, 10]
+    'patience': [None,]
 }
 
 
@@ -139,18 +139,30 @@ with open("best_model_params.json", "w") as f:
 print(f"Best model: {best_model_i} with val CE: {best_val_CE * 100:.2f}% and val RE: {best_val_RE:.5f}")
 print(f"Best hyperparameters: {best_params}")
 
-model = best_model
-train_CEs, train_REs, _ = model.train(inputs, labels, None, None, alpha=best_params['alpha'], eps=best_params['eps'], early_stopping=False, patience=0, live_plot=False)
 
 test_inputs, test_labels = load_data('data/2d.tst.dat')
+#plot_dots(test_inputs, int2str_labels(test_labels), None, None, None, None, title="test data distribution", block=False, filename='plots/test_data.png', show=show_graphs)
+
+model = best_model
+if best_params['normalize']:
+    inputs = (inputs - mean) / std
+    test_inputs = (test_inputs - mean) / std
+
+train_CEs, train_REs, _ = model.train(inputs, labels, None, None, alpha=best_params['alpha'], eps=best_params['eps'], early_stopping=False, patience=None, live_plot=False)
+
 test_CE, test_RE = model.test(test_inputs, test_labels)
 
 print(f"Test CE: {test_CE * 100:.2f}%, Test RE: {test_RE:.5f}")
-_, train_predicted = model.predict(train_inputs)
+_, train_predicted = model.predict(inputs)
+train_predicted = int2str_labels(train_predicted)
 _, test_predicted  = model.predict(test_inputs)
+test_predicted = int2str_labels(test_predicted)
 
-plot_confusion_matrix(test_labels, test_predicted, 'Confusion matrix for test data', block=False, filename='plots/confusion_matrix_test.png')
+plot_errors(title="Error (%) vs. Time (Training CE)",errors=train_CEs, test_error=test_CE, block=False, filename='plots/train_CE.png', show=show_graphs)
 
-plot_dots(test_inputs, test_labels, None, None, None, None, block=False, filename='plots/test_data.png')
-plot_dots(train_inputs, train_labels, train_predicted, test_inputs, test_labels, test_predicted, block=False, filename='plots/all_data_predicted.png')
-plot_dots(None, None, None, test_inputs, test_labels, test_predicted, title='Test data only', block=False, filename='plots/test_data_predicted.png')
+plot_confusion_matrix(test_labels, test_predicted, num_classes=3, block=False, filename='plots/confusion_matrix_test.png', show=show_graphs)
+
+
+plot_dots(inputs = test_inputs, labels = int2str_labels(test_labels), block=False, filename='plots/test_data.png', show=show_graphs)
+plot_dots(inputs = inputs, labels = int2str_labels(labels), predicted = train_predicted, test_inputs=test_inputs, test_labels=int2str_labels(test_labels), test_predicted=test_predicted, block=False, filename='plots/train_data_predicted.png', show=show_graphs)
+plot_dots(inputs = None, test_inputs=test_inputs, test_labels=int2str_labels(test_labels), test_predicted=test_predicted, title='Test data only', block=False, filename='plots/test_data_predicted.png', show=show_graphs)

@@ -27,11 +27,11 @@ class MLPClassifier(MLP):
 
     def get_function(self, activation, derivative=False):
             if activation == 'sigmoid':
-                s = lambda x: 1 / (1 + np.exp(-x))
+                s = lambda x: np.where(x >= 0, 1 / (1 + np.exp(-x)), np.exp(x) / (1 + np.exp(x)))
                 if derivative:
                     return lambda x: s(x) * (1 - s(x))
                 else:
-                    return lambda x: np.where(x >= 0, s(x), np.exp(x) / (1 + np.exp(x)))
+                    return lambda x: s(x)
             elif activation == 'tanh':
                 if derivative:
                     return lambda x: 1 - x**2
@@ -44,9 +44,9 @@ class MLPClassifier(MLP):
                     return lambda x: np.maximum(0, x)
             elif activation == 'softmax':
                 if derivative:
-                    raise NotImplementedError(" Pouzivaj softmax len ako output activation funkciuUse softmax with cross-entropy combo instead.")
+                    raise NotImplementedError(" Pouzivaj softmax len ako output activation funkciu s crossentrpiou ako loss function")
                 else:
-                    return lambda x: np.exp(x) / np.sum(np.exp(x), axis=0)
+                    return lambda x: np.exp(x - np.max(x, axis=0, keepdims=True)) / np.sum(np.exp(x - np.max(x, axis=0, keepdims=True)), axis=0, keepdims=True)
             elif activation == 'linear':
                 if derivative:
                     return lambda x: 1

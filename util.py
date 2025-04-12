@@ -14,54 +14,60 @@ import time
 import functools
 
 def load_data(file_path):
-    label_map = {'A': 0, 'B': 1, 'C': 2}
     data = np.genfromtxt(file_path, dtype=[('x', float), ('y', float), ('label', 'U1')])[1:]
     inputs = np.array([[row[0], row[1]] for row in data]).T
-    labels = np.array([label_map[row[2]] for row in data])
-    return inputs, labels
+    labels = np.array([row[2] for row in data])
+    return inputs, str2int_labels(labels)
 
 
-def plot_confusion_matrix(y_true, y_pred, labels=None, title="Confusion Matrix", cmap="viridis", block=True, filename=None):
-    """
-    Plots a confusion matrix using numpy and matplotlib.
+def str2int_labels(str_labels):
+    label_map = {'A': 0, 'B': 1, 'C': 2}
+    int_labels = np.array([label_map[label] for label in str_labels])
+    return int_labels
 
-    Args:
-        y_true (array-like): Ground truth labels.
-        y_pred (array-like): Predicted labels.
-        labels (list, optional): List of label names. Defaults to None.
-        title (str, optional): Title of the plot. Defaults to "Confusion Matrix".
-        cmap (str, optional): Colormap for the plot. Defaults to "viridis".
-    """
-    num_classes = 3
-    cm = np.zeros((num_classes, num_classes), dtype=int)
-    for t, p in zip(y_true, y_pred):
-        cm[t, p] += 1
+def int2str_labels(int_labels):
+    label_map = {0: 'A', 1: 'B', 2: 'C'}
+    str_labels = np.array([label_map[label] for label in int_labels])
+    return str_labels
 
-    # Plot confusion matrix
-    plt.figure(figsize=(8, 6))
-    plt.imshow(cm, interpolation="nearest", cmap=cmap)
-    plt.colorbar()
-    plt.title(title)
-    plt.xlabel("Predicted Label")
-    plt.ylabel("True Label")
 
-    if labels:
-        plt.xticks(np.arange(len(labels)), labels, rotation=45)
-        plt.yticks(np.arange(len(labels)), labels)
-    else:
-        plt.xticks(np.arange(num_classes))
-        plt.yticks(np.arange(num_classes))
+def plot_confusion_matrix(y_true, y_pred, num_classes=3, normalize=True, 
+                          filename=None, show=True, block=False):
+    
+    conf_matrix = np.zeros((num_classes, num_classes), dtype=np.float32)
+    for t, p in zip(y_true, str2int_labels(y_pred)):
+        conf_matrix[t, p] += 1
 
-    for i in range(cm.shape[0]):
-        for j in range(cm.shape[1]):
-            plt.text(j, i, cm[i, j], ha="center", va="center", color="white" if cm[i, j] > cm.max() / 2 else "black")
+    if normalize:
+        with np.errstate(all='ignore'):
+            conf_matrix = conf_matrix / conf_matrix.sum(axis=1, keepdims=True)
+        conf_matrix = np.nan_to_num(conf_matrix)
 
-    plt.tight_layout()
+    fig, ax = plt.subplots()
+    cax = ax.matshow(conf_matrix, cmap='Blues')
+    fig.colorbar(cax)
+
+    ax.set_xlabel('Predicted')
+    ax.set_ylabel('Actual')
+    ax.set_xticks(np.arange(num_classes))
+    ax.set_yticks(np.arange(num_classes))
+    ax.set_xticklabels(['A', 'B', 'C'])
+    ax.set_yticklabels(['A', 'B', 'C'])
+
+    for (i, j), val in np.ndenumerate(conf_matrix):
+        text = f'{val:.2f}' if normalize else f'{int(val)}'
+        ax.text(j, i, text, ha='center', va='center', color='black')
+
+    plt.title('Confusion Matrix')
 
     if filename:
         plt.savefig(filename, bbox_inches='tight')
-        print(f"Confusion matrix saved to {filename}")
-    plt.show(block=block)
+    
+    if show:
+        plt.show(block=block)
+    else:
+        plt.close()
+
 
 # # Utilities
 def onehot_decode(inp):
@@ -171,7 +177,7 @@ def limits(values, gap=0.05):
     return np.array((x0-xg, x1+xg))
 
 
-def plot_errors(title, errors, test_error=None, block=True):
+def plot_errors(title, errors, test_error=None, block=True, filename=None, show=False):
     plt.figure(1)
     use_keypress()
     plt.clf()
@@ -184,7 +190,13 @@ def plot_errors(title, errors, test_error=None, block=True):
 
     plt.tight_layout()
     plt.gcf().canvas.manager.set_window_title(title)
-    plt.show(block=block)
+    if filename:
+        plt.savefig(filename, bbox_inches='tight')
+    
+    if show:
+        plt.show(block=block)
+    else:
+        plt.close()
 
 
 def plot_both_errors(trainCEs, trainREs, testCE=None, testRE=None, pad=None, block=True):
@@ -223,7 +235,7 @@ def plot_both_errors(trainCEs, trainREs, testCE=None, testRE=None, pad=None, blo
 
 
 def plot_dots(inputs, labels=None, predicted=None, test_inputs=None, test_labels=None, test_predicted=None, s=60, i_x=0,
-              i_y=1, title=None, block=True, filename = None):
+              i_y=1, title=None, block=True, filename = None, show=False):
     plt.figure(title or 3)
     use_keypress()
     plt.clf()
@@ -284,7 +296,10 @@ def plot_dots(inputs, labels=None, predicted=None, test_inputs=None, test_labels
     if filename:
         plt.savefig(filename, bbox_inches='tight')
     
-    plt.show(block=block)
+    if show:
+        plt.show(block=block)
+    else:
+        plt.close()
 
 
 def plot_areas(model, inputs, labels=None, w=30, h=20, i_x=0, i_y=1, block=True):
