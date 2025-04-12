@@ -52,7 +52,7 @@ ACTIVATION_FUNCTIONS = ['sigmoid', 'tanh', 'relu', 'linear']
 hyperparams = {
     'dim_hid': [2, 3, 4, 5, 10, 15],
     'alpha': [0.01,],
-    'eps': [100, 150, 200, 250],
+    'eps': [100, 150, 200],
     'normalize': [True, False],
     'weight_init': ['sparse', 'normal_dist', 'uniform'],
     'hidden_activation': ACTIVATION_FUNCTIONS,
@@ -90,14 +90,24 @@ for i_model, values in enumerate(product(*hyperparams.values())):
     model = MLPClassifier(dim_in=x_train.shape[0], dim_hid=hp['dim_hid'], n_classes=np.max(train_labels)+1, weight_init=hp['weight_init'],
                           hidden_activation=hp['hidden_activation'], output_activation=hp['output_activation'], sparsity=hp['sparsity'], weight_scale=hp['weight_scale'])
     
-    train_CEs, train_REs = model.train(x_train, train_labels, val_inputs=x_val if use_early_stopping else None, val_labels=val_labels if use_early_stopping else None, alpha=hp['alpha'], eps=hp['eps'],early_stopping=use_early_stopping, patience=patience, live_plot=False)
+    train_CEs, train_REs, val_CEs = model.train(x_train, train_labels, val_inputs=x_val if use_early_stopping else None, val_labels=val_labels if use_early_stopping else None, alpha=hp['alpha'], eps=hp['eps'],early_stopping=use_early_stopping, patience=patience, live_plot=False)
+
+    best_epoch = len(val_CEs) - 1
+
+    if val_CEs is not None:
+        best_epoch = int(np.argmin(val_CEs))
+        
+
+    train_CE_final = train_CEs[best_epoch]
+    train_RE_final = train_REs[best_epoch]
 
     val_CE, val_RE = model.test(x_val, val_labels)
-    results.append((hp, train_CEs[-1], train_REs[-1], val_CE, val_RE))
+    results.append((hp, train_CE_final, train_RE_final, val_CE, val_RE))
 
     if val_CE < best_val_CE:
         best_val_CE = val_CE
         best_model = model
         best_params = hp
+
 
 print(results)

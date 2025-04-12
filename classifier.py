@@ -104,6 +104,7 @@ class MLPClassifier(MLP):
 
         CEs = []
         REs = []
+        val_CEs = []
 
         best_val_CE = float('inf')
         best_weights = None
@@ -141,6 +142,7 @@ class MLPClassifier(MLP):
 
             if early_stopping:
                 val_CE, _ = self.test(val_inputs, val_labels)
+                val_CEs.append(val_CE)
 
                 if val_CE < best_val_CE:
                     best_val_CE = val_CE
@@ -162,4 +164,4 @@ class MLPClassifier(MLP):
 
         print()
 
-        return CEs, REs
+        return CEs, REs, val_CEs if early_stopping else None
