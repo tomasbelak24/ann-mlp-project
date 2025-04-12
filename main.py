@@ -53,22 +53,25 @@ hyperparams = {
     'output_activation': ['softmax'],
     'sparsity': [0.1, 0.2],
     'weight_scale': [1.0, 2.0],
-    'patience': [None, 10]
+    'patience': [None, 10],
+    'delta':[0, 0.001]
 }
 
-
+""""
 hyperparams = {
     'dim_hid': [10,],
     'alpha': [0.01,],
-    'eps': [10,],
+    'eps': [50,],
     'normalize': [True],
     'weight_init': ['normal_dist',],
     'hidden_activation': ['sigmoid',],
     'output_activation': ['softmax',],
     'sparsity': [0.2],
     'weight_scale': [1.0, ],
-    'patience': [None,]
+    'patience': [10,],
+    'delta':[0.01,]
 }
+"""
 
 
 
@@ -92,6 +95,9 @@ with open("all_model_results.csv", "w", newline="") as f:
         if hp['weight_init'] != 'sparse':
             hp['sparsity'] = None
 
+        if hp['patience'] is None:
+            hp['delta'] = None
+
         hp_key = json.dumps(hp, sort_keys=True)
         if hp_key in seen_configs:
             continue
@@ -107,7 +113,7 @@ with open("all_model_results.csv", "w", newline="") as f:
         model = MLPClassifier(dim_in=x_train.shape[0], dim_hid=hp['dim_hid'], n_classes=np.max(train_labels)+1, weight_init=hp['weight_init'],
                             hidden_activation=hp['hidden_activation'], output_activation=hp['output_activation'], sparsity=hp['sparsity'], weight_scale=hp['weight_scale'])
         
-        train_CEs, train_REs, val_CEs = model.train(x_train, train_labels, val_inputs=x_val if use_early_stopping else None, val_labels=val_labels if use_early_stopping else None, alpha=hp['alpha'], eps=hp['eps'],early_stopping=use_early_stopping, patience=patience, live_plot=False)
+        train_CEs, train_REs, val_CEs = model.train(x_train, train_labels, val_inputs=x_val if use_early_stopping else None, val_labels=val_labels if use_early_stopping else None, alpha=hp['alpha'], eps=hp['eps'],early_stopping=use_early_stopping, patience=patience, delta=hp['delta'], live_plot=False)
 
         best_epoch_i = hp['eps'] - 1
 
@@ -166,3 +172,4 @@ plot_confusion_matrix(test_labels, test_predicted, num_classes=3, block=False, f
 plot_dots(inputs = test_inputs, labels = int2str_labels(test_labels), block=False, filename='plots/test_data.png', show=show_graphs)
 plot_dots(inputs = inputs, labels = int2str_labels(labels), predicted = train_predicted, test_inputs=test_inputs, test_labels=int2str_labels(test_labels), test_predicted=test_predicted, block=False, filename='plots/train_data_predicted.png', show=show_graphs)
 plot_dots(inputs = None, test_inputs=test_inputs, test_labels=int2str_labels(test_labels), test_predicted=test_predicted, title='Test data only', block=False, filename='plots/test_data_predicted.png', show=show_graphs)
+print(len(seen_configs))

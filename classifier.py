@@ -92,7 +92,7 @@ class MLPClassifier(MLP):
         RE = np.mean(self.error(targets, outputs))
         return CE, RE
 
-    def train(self, inputs, labels, val_inputs = None, val_labels = None, alpha=0.1, eps=100, early_stopping = False, patience = 10, live_plot=False, live_plot_interval=10):
+    def train(self, inputs, labels, val_inputs = None, val_labels = None, alpha=0.1, eps=100, early_stopping = False, patience = 10, delta = 0, live_plot=False, live_plot_interval=10):
         """
         Training of the classifier
         inputs: matrix of input vectors (each column is one input vector)
@@ -150,7 +150,8 @@ class MLPClassifier(MLP):
                 val_CE, _ = self.test(val_inputs, val_labels)
                 val_CEs.append(val_CE)
 
-                if val_CE < best_val_CE:
+                #print(best_val_CE - val_CE)
+                if best_val_CE - val_CE > delta:
                     best_val_CE = val_CE
                     no_improve_count = 0
                     best_weights = (self.W_hid.copy(), self.W_out.copy())
