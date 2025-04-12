@@ -57,7 +57,7 @@ hyperparams = {
     'delta':[0, 0.001]
 }
 
-""""
+'''
 hyperparams = {
     'dim_hid': [10,],
     'alpha': [0.01,],
@@ -71,7 +71,8 @@ hyperparams = {
     'patience': [10,],
     'delta':[0.01,]
 }
-"""
+'''
+
 
 
 
@@ -88,7 +89,7 @@ grid_search_start_time = time.time()
 
 with open("all_model_results.csv", "w", newline="") as f:
     writer = csv.writer(f)
-    header = ["model_id", ] + list(keys) + ["train_CE", "train_RE", "val_CE", "val_RE"]
+    header = ["model_id", ] + list(keys) + ["train_CE", "train_RE", "val_CE", "val_RE", "duration"]
     writer.writerow(header)
     for i_model, values in enumerate(product(*hyperparams.values()), start=1):
         hp = dict(zip(keys, values))
@@ -114,7 +115,8 @@ with open("all_model_results.csv", "w", newline="") as f:
         model = MLPClassifier(dim_in=x_train.shape[0], dim_hid=hp['dim_hid'], n_classes=np.max(train_labels)+1, weight_init=hp['weight_init'],
                             hidden_activation=hp['hidden_activation'], output_activation=hp['output_activation'], sparsity=hp['sparsity'], weight_scale=hp['weight_scale'])
         
-        train_CEs, train_REs, val_CEs = model.train(x_train, train_labels, val_inputs=x_val if use_early_stopping else None, val_labels=val_labels if use_early_stopping else None, alpha=hp['alpha'], eps=hp['eps'],early_stopping=use_early_stopping, patience=patience, delta=hp['delta'], live_plot=False)
+        train_CEs, train_REs, val_CEs, duration = model.train(x_train, train_labels, val_inputs=x_val if use_early_stopping else None, val_labels=val_labels if use_early_stopping else None, alpha=hp['alpha'], eps=hp['eps'],early_stopping=use_early_stopping, patience=patience, delta=hp['delta'], live_plot=False)
+        #print(duration)
 
         best_epoch_i = hp['eps'] - 1
 
@@ -129,7 +131,7 @@ with open("all_model_results.csv", "w", newline="") as f:
         val_CE, val_RE = model.test(x_val, val_labels)
         print(f"Val CE: {val_CE * 100:.2f}%, Val RE: {val_RE:.5f}")
         
-        row = [i_model, ] + [hp[k] for k in keys] + [train_CE_final, train_RE_final, val_CE, val_RE]
+        row = [i_model, ] + [hp[k] for k in keys] + [train_CE_final, train_RE_final, val_CE, val_RE, duration]
         writer.writerow(row)
 
         if val_CE < best_val_CE:
@@ -158,7 +160,7 @@ if best_params['normalize']:
     inputs = (inputs - mean) / std
     test_inputs = (test_inputs - mean) / std
 
-train_CEs, train_REs, _ = model.train(inputs, labels, None, None, alpha=best_params['alpha'], eps=best_params['eps'], early_stopping=False, patience=None, live_plot=False)
+train_CEs, train_REs, _, duration = model.train(inputs, labels, None, None, alpha=best_params['alpha'], eps=best_params['eps'], early_stopping=False, patience=None, live_plot=False)
 
 test_CE, test_RE = model.test(test_inputs, test_labels)
 

@@ -116,9 +116,10 @@ def timeit(func):
     @functools.wraps(func)
     def newfunc(*args, **kwargs):
         start_time = time.time()
-        out = func(*args, **kwargs)
+        out = list(func(*args, **kwargs))
         elapsed_time = time.time() - start_time
         print('Function [{}] finished in {:.3f} s'.format(func.__name__, elapsed_time))
+        out.append(elapsed_time)
         return out
     return newfunc
 
