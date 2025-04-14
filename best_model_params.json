@@ -1,0 +1,15 @@
+{
+    "39": {
+        "dim_hid": 10,
+        "alpha": 0.01,
+        "eps": 200,
+        "normalize": true,
+        "weight_init": "normal_dist",
+        "hidden_activation": "relu",
+        "output_activation": "softmax",
+        "sparsity": null,
+        "weight_scale": 2.0,
+        "patience": 10,
+        "delta": 0
+    }
+}

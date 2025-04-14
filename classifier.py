@@ -138,7 +138,7 @@ class MLPClassifier(MLP):
             RE /= count
             CEs.append(CE)
             REs.append(RE)
-            if (ep+1) % 100 == 0: print('Epoch {:3d}/{}, CE = {:6.2%}, RE = {:.5f}'.format(ep+1, eps, CE, RE))
+            if (ep+1) % 50 == 0: print('Epoch {:3d}/{}, CE = {:6.2%}, RE = {:.5f}'.format(ep+1, eps, CE, RE))
 
             if live_plot and ((ep+1) % live_plot_interval == 0):
                 _, predicted = self.predict(inputs)
