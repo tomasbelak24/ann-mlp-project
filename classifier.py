@@ -93,7 +93,7 @@ class MLPClassifier(MLP):
         return CE, RE
 
     @timeit
-    def train(self, inputs, labels, val_inputs = None, val_labels = None, alpha=0.1, eps=100, early_stopping = False, patience = 10, delta = 0, lr_schedule = None, live_plot=False, live_plot_interval=10):
+    def train(self, inputs, labels, val_inputs = None, val_labels = None, alpha=0.1, eps=100, early_stopping = {'stop-early': False}, lr_schedule = None, live_plot=False, live_plot_interval=10):
         """
         Training of the classifier
         inputs: matrix of input vectors (each column is one input vector)
@@ -113,19 +113,25 @@ class MLPClassifier(MLP):
         REs = []
         val_CEs = []
 
-        best_val_CE = float('inf')
-        best_weights = None
-        no_improve_count = 0
+        stop_early = early_stopping.get('stop-early', False)
+        if stop_early:
+            patience = early_stopping.get('patience', 10)
+            delta = early_stopping.get('delta', 0.0)
+            best_val_CE = float('inf')
+            best_weights = None
+            no_improve_count = 0
+            if val_inputs is None or val_labels is None:
+                raise ValueError("Validation data must be provided for early stopping.")
 
         for ep in range(eps):
             CE = 0
             RE = 0
 
             if lr_schedule:
-                print("lr scheduling works...")
-                print('povodna alfa:', alpha)
+                #print("lr scheduling works...")
+                #print('povodna alfa:', alpha)
                 alpha = lr_schedule(ep, alpha)
-                print('nova alpha:', alpha)
+                #print('nova alpha:', alpha)
 
             for idx in np.random.permutation(count):
                 x = inputs[:, idx]
@@ -153,7 +159,7 @@ class MLPClassifier(MLP):
                 plot_areas(self, inputs, block=False)
                 redraw()
 
-            if early_stopping:
+            if stop_early:
                 val_CE, _ = self.test(val_inputs, val_labels)
                 val_CEs.append(val_CE)
 
@@ -170,7 +176,7 @@ class MLPClassifier(MLP):
                     break
 
         
-        if early_stopping and best_weights is not None:
+        if stop_early and best_weights is not None:
             self.W_hid, self.W_out = best_weights
 
         if live_plot:
@@ -178,4 +184,4 @@ class MLPClassifier(MLP):
 
         print()
 
-        return CEs, REs, val_CEs if early_stopping else None
+        return CEs, REs, val_CEs if stop_early else None

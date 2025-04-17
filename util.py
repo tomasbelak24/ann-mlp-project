@@ -13,6 +13,44 @@ import os
 import time
 import functools
 
+
+def plot_decision_boundary(model, inputs, labels, title, filename=None, show=True):
+    # Create a grid
+    x_min, x_max = inputs[0, :].min() - 1, inputs[0, :].max() + 1
+    y_min, y_max = inputs[1, :].min() - 1, inputs[1, :].max() + 1
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                         np.arange(y_min, y_max, 0.1))
+
+    # Predict for each point in grid
+    grid_inputs = np.c_[xx.ravel(), yy.ravel()].T
+    _, Z = model.predict(grid_inputs)
+    Z = Z.reshape(xx.shape)
+
+    # Plot
+    plt.figure(figsize=(10, 8))
+    plt.contourf(xx, yy, Z, alpha=0.4, cmap='viridis')
+    scatter = plt.scatter(inputs[0, :], inputs[1, :], c=labels, s=20, edgecolor='k', cmap='viridis')
+    plt.xlabel('Feature 1')
+    plt.ylabel('Feature 2')
+    plt.title(title)
+    plt.colorbar(scatter, ticks=[0, 1, 2], label='Class (0=A, 1=B, 2=C)')
+
+    # Save or show plot
+    if filename:
+        plt.savefig(filename, bbox_inches='tight')
+    if show:
+        plt.show()
+    else:
+        plt.close()
+
+def plot_val_errors(val_CEs,title, block=True):
+    plt.plot(val_CEs, label="Validation Loss")
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.title(title)
+    plt.legend()
+    plt.show()
+
 def load_data(file_path):
     data = np.genfromtxt(file_path, dtype=[('x', float), ('y', float), ('label', 'U1')])[1:]
     inputs = np.array([[row[0], row[1]] for row in data]).T
