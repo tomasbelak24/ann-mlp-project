@@ -93,7 +93,7 @@ class MLPClassifier(MLP):
         return CE, RE
 
     @timeit
-    def train(self, inputs, labels, val_inputs = None, val_labels = None, alpha=0.1, eps=100, early_stopping = False, patience = 10, delta = 0, live_plot=False, live_plot_interval=10):
+    def train(self, inputs, labels, val_inputs = None, val_labels = None, alpha=0.1, eps=100, early_stopping = False, patience = 10, delta = 0, lr_schedule = None, live_plot=False, live_plot_interval=10):
         """
         Training of the classifier
         inputs: matrix of input vectors (each column is one input vector)
@@ -120,6 +120,12 @@ class MLPClassifier(MLP):
         for ep in range(eps):
             CE = 0
             RE = 0
+
+            if lr_schedule:
+                print("lr scheduling works...")
+                print('povodna alfa:', alpha)
+                alpha = lr_schedule(ep, alpha)
+                print('nova alpha:', alpha)
 
             for idx in np.random.permutation(count):
                 x = inputs[:, idx]
