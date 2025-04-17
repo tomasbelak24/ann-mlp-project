@@ -1,4 +1,4 @@
 Model Index,dim_hid,alpha,eps,normalize,hidden_activation,output_activation,lr_schedule,weight_init,sparsity,weight_scale,early_stopping,Train CE,Train RE,Val CE,Val RE,Duration
-1,10,0.01,20,True,sigmoid,softmax,,normal_dist,,1.0,"{'stop-early': True, 'patience': 10, 'delta': 0}",0.04640625,0.049946086957371696,0.04,83.13960059191537,16.20443367958069
-2,10,0.01,20,True,sigmoid,softmax,,normal_dist,,1.0,"{'stop-early': True, 'patience': 10, 'delta': 0.001}",0.03953125,0.045844117565041094,0.034375,74.43832845664127,16.16898202896118
-3,10,0.01,20,True,sigmoid,softmax,,normal_dist,,1.0,{'stop-early': False},0.04875,0.054086925356051294,0.055,87.61521310386155,14.920667171478271
+1,10,0.01,20,True,sigmoid,softmax,"{'decay': 'exponential_decay', 'params': {'decay_rate': 0.01}}",normal_dist,,1.0,"{'stop-early': True, 'patience': 10, 'delta': 0}",0.0528125,0.060629992082925924,0.045625,99.16211400253066,16.521981954574585
+2,10,0.01,20,True,sigmoid,softmax,"{'decay': 'exponential_decay', 'params': {'decay_rate': 0.01}}",normal_dist,,1.0,"{'stop-early': True, 'patience': 10, 'delta': 0.001}",0.0490625,0.05990529444267706,0.04375,102.63972612975147,16.294411182403564
+3,10,0.01,20,True,sigmoid,softmax,"{'decay': 'exponential_decay', 'params': {'decay_rate': 0.01}}",normal_dist,,1.0,{'stop-early': False},0.06921875,0.06829986408812529,0.070625,111.38264202039687,14.793551206588745

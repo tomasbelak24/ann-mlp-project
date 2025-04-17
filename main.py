@@ -40,10 +40,14 @@ hyperparams_part1 = {
     'output_activation': ['softmax']
 }
 
+
 # Experimental hyperparameters for the second search to fine tune the model
 early_stopping_options = [{'stop-early': True, 'patience': 10, 'delta': 0}, {'stop-early': True, 'patience': 10, 'delta': 0.001},{'stop-early': False}]
+lr_schedule_options = [{'decay': 'exponential_decay', 'params': {'decay_rate': 0.01}}, {'decay': 'step_decay', 'params': {'drop': 0.8, 'epochs_drop': 30}}, {'decay': None}]
+
+
 hyperparams_part2 = {
-    'lr_schedule': [None, 'step', 'exponential'],
+    'lr_schedule': lr_schedule_options,
     'weight_init': ['normal_dist', 'uniform', 'sparse'],
     'sparsity': [0.1, 0.2],
     'weight_scale': [1.0, 2.0],
@@ -52,7 +56,7 @@ hyperparams_part2 = {
 
 
 # hyperparams for testing
-hyperparams_part1 = {
+""" hyperparams_part1 = {
     'dim_hid': [10,],
     'alpha': [0.01,],
     'eps': [20,],
@@ -62,20 +66,13 @@ hyperparams_part1 = {
 }
 
 hyperparams_part2 = {
-    'lr_schedule': [None,],
+    'lr_schedule': [{'decay': 'exponential_decay', 'params': {'decay_rate': 0.01}}],
     'weight_init': ['normal_dist',],
     'sparsity': [0.1,],
     'weight_scale': [1.0,],
     'early_stopping': early_stopping_options,
-}
+} """
 
-
-def step_decay(epoch, alpha, drop=0.1, epochs_drop=30):
-    #print(f"Epoch: {epoch}, alpha: {alpha}, drop: {drop}, epochs_drop: {epochs_drop}")
-    return alpha * (drop ** (epoch // epochs_drop))
-
-def exponential_decay(epoch, alpha, decay_rate=0.96):
-    return alpha * np.exp(-decay_rate * epoch)
 
 # Function to perform grid search
 def perform_grid_search(hyperparams, fixed_params=None, filename="model_results.csv"):
@@ -129,12 +126,8 @@ def perform_grid_search(hyperparams, fixed_params=None, filename="model_results.
                 weight_scale=hp.get('weight_scale', 1.0)
             )
 
-            lr_schedule = None
-            if hp.get('lr_schedule') == 'step':
-                lr_schedule = step_decay
-            elif hp.get('lr_schedule') == 'exponential':
-                lr_schedule = exponential_decay
-
+            lr_schedule = hp.get('lr_schedule', {'decay': None})
+            #lr_schedule = lr_schedule_mapping.get(lr_schedule_key, None)
             use_early_stopping = hp.get('early_stopping', {}).get('stop-early', False)
 
             train_CEs, train_REs, val_CEs, duration = model.train(
@@ -160,7 +153,7 @@ def perform_grid_search(hyperparams, fixed_params=None, filename="model_results.
             val_CE, val_RE = model.test(x_val, val_labels)
             print(f"Val CE: {val_CE * 100:.2f}%, Val RE: {val_RE:.5f}\n")
 
-            print(hp)
+            #print(hp)
             row = [i_model, ] + [hp.get(k) for k in all_keys] + [train_CE_final, train_RE_final, val_CE, val_RE, duration]
             writer.writerow(row)
 
@@ -195,12 +188,7 @@ if best_params_part2['normalize']:
     inputs = (inputs - mean) / std
     test_inputs = (test_inputs - mean) / std
 
-lr_schedule = None
-lr_schedule_key = best_params_part2.get('lr_schedule')
-if lr_schedule_key == 'step':
-    lr_schedule = step_decay
-elif lr_schedule_key == 'exponential':
-    lr_schedule = exponential_decay
+lr_schedule = best_params_part2.get('lr_schedule', {'decay': None})
 
 print("Training final model...")
 train_CEs, train_REs, _, duration = model.train(inputs, labels, None, None, alpha=best_params_part2['alpha'], eps=best_params_part2['eps'], early_stopping={'stop-early': False}, lr_schedule=lr_schedule, live_plot=False)

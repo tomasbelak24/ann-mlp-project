@@ -93,7 +93,7 @@ class MLPClassifier(MLP):
         return CE, RE
 
     @timeit
-    def train(self, inputs, labels, val_inputs = None, val_labels = None, alpha=0.1, eps=100, early_stopping = {'stop-early': False}, lr_schedule = None, live_plot=False, live_plot_interval=10):
+    def train(self, inputs, labels, val_inputs = None, val_labels = None, alpha=0.1, eps=100, early_stopping = {'stop-early': False}, lr_schedule = {'decay': None}, live_plot=False, live_plot_interval=10):
         """
         Training of the classifier
         inputs: matrix of input vectors (each column is one input vector)
@@ -122,15 +122,41 @@ class MLPClassifier(MLP):
             no_improve_count = 0
             if val_inputs is None or val_labels is None:
                 raise ValueError("Validation data must be provided for early stopping.")
+        
+        #print(lr_schedule)
+        lr_schedule_active = lr_schedule.get('decay', None) is not None
+        #print(f"lr_schedule_active: {lr_schedule_active}")
+        
+        if lr_schedule_active:
+
+            def step_decay(epoch, alpha, params):
+                drop = params.get('drop', 0.1)
+                epochs_drop = params.get('epochs_drop', 30)
+                if epoch % epochs_drop == 0 and epoch > 0:
+                    alpha *= drop
+                return alpha
+
+            def exponential_decay(epoch, alpha, params):
+                decay_rate= params.get('decay_rate', 0.96)
+                return alpha * np.exp(-decay_rate * epoch)
+            
+            lr_schedule_mapping = {
+            'step_decay': step_decay,
+            'exponential_decay': exponential_decay, 
+            }
+            
+            lr_params = lr_schedule.get('params', {})
+            #print(lr_schedule['decay'])
+            decay_function = lr_schedule_mapping[lr_schedule['decay']]
 
         for ep in range(eps):
             CE = 0
             RE = 0
 
-            if lr_schedule:
+            if lr_schedule_active:
                 #print("lr scheduling works...")
                 #print('povodna alfa:', alpha)
-                alpha = lr_schedule(ep, alpha)
+                alpha = decay_function(ep, alpha, lr_params)
                 #print('nova alpha:', alpha)
 
             for idx in np.random.permutation(count):
