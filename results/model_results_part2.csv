@@ -1,0 +1,4 @@
+Model Index,dim_hid,alpha,eps,normalize,hidden_activation,output_activation,lr_schedule,weight_init,sparsity,weight_scale,early_stopping,Train CE,Train RE,Val CE,Val RE,Duration
+1,10,0.01,20,True,sigmoid,softmax,,normal_dist,,1.0,"{'stop-early': True, 'patience': 10, 'delta': 0}",0.04640625,0.049946086957371696,0.04,83.13960059191537,16.20443367958069
+2,10,0.01,20,True,sigmoid,softmax,,normal_dist,,1.0,"{'stop-early': True, 'patience': 10, 'delta': 0.001}",0.03953125,0.045844117565041094,0.034375,74.43832845664127,16.16898202896118
+3,10,0.01,20,True,sigmoid,softmax,,normal_dist,,1.0,{'stop-early': False},0.04875,0.054086925356051294,0.055,87.61521310386155,14.920667171478271

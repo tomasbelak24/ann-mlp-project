@@ -1,0 +1,2 @@
+Model Index,dim_hid,alpha,eps,normalize,hidden_activation,output_activation,Train CE,Train RE,Val CE,Val RE,Duration
+1,10,0.01,20,True,sigmoid,softmax,0.05296875,0.053844131980806294,0.0475,84.39211852721127,15.043047904968262

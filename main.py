@@ -30,7 +30,7 @@ train_labels = labels[train_indices]
 val_inputs = inputs[:, val_indices]
 val_labels = labels[val_indices]
 
-# Define hyperparameters for the first search
+# First search with hyperparameters that could have big impact on the model
 hyperparams_part1 = {
     'dim_hid': [5, 10, 20, 50],
     'alpha': [0.05, 0.005, 0.0005],
@@ -40,7 +40,7 @@ hyperparams_part1 = {
     'output_activation': ['softmax']
 }
 
-# Define hyperparameters for the second search
+# Experimental hyperparameters for the second search to fine tune the model
 early_stopping_options = [{'stop-early': True, 'patience': 10, 'delta': 0}, {'stop-early': True, 'patience': 10, 'delta': 0.001},{'stop-early': False}]
 hyperparams_part2 = {
     'lr_schedule': [None, 'step', 'exponential'],
@@ -51,16 +51,16 @@ hyperparams_part2 = {
 }
 
 
+# hyperparams for testing
 hyperparams_part1 = {
     'dim_hid': [10,],
-    'alpha': [0.01],
-    'eps': [20],
-    'normalize': [True],
+    'alpha': [0.01,],
+    'eps': [20,],
+    'normalize': [True,],
     'hidden_activation': ['sigmoid'],
     'output_activation': ['softmax']
 }
 
-# Define hyperparameters for the second search
 hyperparams_part2 = {
     'lr_schedule': [None,],
     'weight_init': ['normal_dist',],
@@ -68,6 +68,7 @@ hyperparams_part2 = {
     'weight_scale': [1.0,],
     'early_stopping': early_stopping_options,
 }
+
 
 def step_decay(epoch, alpha, drop=0.1, epochs_drop=30):
     #print(f"Epoch: {epoch}, alpha: {alpha}, drop: {drop}, epochs_drop: {epochs_drop}")
@@ -77,24 +78,25 @@ def exponential_decay(epoch, alpha, decay_rate=0.96):
     return alpha * np.exp(-decay_rate * epoch)
 
 # Function to perform grid search
-def perform_grid_search(hyperparams, fixed_params=None):
+def perform_grid_search(hyperparams, fixed_params=None, filename="model_results.csv"):
     best_val_CE = float('inf')
     best_model = None
     best_params = None
     seen_configs = set()
 
-    print(f"Hyperparameters: {hyperparams}")
-    print(f"Fixed parameters: {fixed_params}")
+    #print(f"Hyperparameters: {hyperparams}")
+    #print(f"Fixed parameters: {fixed_params}")
 
     keys = list(hyperparams.keys())
-    print("keys at the start", keys)
-    with open("all_model_results.csv", "a", newline="") as f:
+    all_keys = list(fixed_params.keys()) + list(hyperparams.keys()) if fixed_params else list(keys)
+
+    header = ["Model Index"] + all_keys + ["Train CE", "Train RE", "Val CE", "Val RE", "Duration"]
+
+    with open(filename, "w", newline="") as f:
         writer = csv.writer(f)
+        writer.writerow(header)
+
         for i_model, values in enumerate(product(*hyperparams.values()), start=1):
-            if i_model == 2:
-                print('keys here', keys)
-                print(values)
-                print(dict(zip(keys, values)))
 
             hp = dict(zip(keys, values))
             if fixed_params:
@@ -103,7 +105,6 @@ def perform_grid_search(hyperparams, fixed_params=None):
             if hp.get('weight_init') != 'sparse':
                 try:
                     del hp['sparsity']
-                    #keys.remove('sparsity')
                 except KeyError:
                     pass
 
@@ -134,13 +135,7 @@ def perform_grid_search(hyperparams, fixed_params=None):
             elif hp.get('lr_schedule') == 'exponential':
                 lr_schedule = exponential_decay
 
-            
-            #print(hp.get('early_stopping', {}))
             use_early_stopping = hp.get('early_stopping', {}).get('stop-early', False)
-            #print(use_early_stopping)
-
-            #print("delta:", hp.get('delta',0))
-            #print("patience:", patience)
 
             train_CEs, train_REs, val_CEs, duration = model.train(
                 x_train, train_labels,
@@ -152,24 +147,21 @@ def perform_grid_search(hyperparams, fixed_params=None):
             )
 
             best_epoch_i = hp['eps'] - 1
-            best_val_CE = float('inf')
-            #print(val_CEs)
+            
             if val_CEs is not None:
                 #improvements = [val_CEs[i] - val_CEs[i + 1] for i in range(len(val_CEs) - 1)]
                 #print(improvements)
                 #plot_val_errors(val_CEs, f"{i_model}.model validation error vs time", block=False)
                 best_epoch_i = int(np.argmin(val_CEs))
-                best_val_CE = val_CEs[best_epoch_i]
 
             train_CE_final = train_CEs[best_epoch_i]
             train_RE_final = train_REs[best_epoch_i]
 
             val_CE, val_RE = model.test(x_val, val_labels)
-            print(f"Val CE: {val_CE * 100:.2f}%, Val RE: {val_RE:.5f}")
+            print(f"Val CE: {val_CE * 100:.2f}%, Val RE: {val_RE:.5f}\n")
 
-            #print("konzistentne ?", best_val_CE, val_CE)
-
-            row = [i_model, ] + [hp.get(k) for k in keys] + [train_CE_final, train_RE_final, val_CE, val_RE, duration]
+            print(hp)
+            row = [i_model, ] + [hp.get(k) for k in all_keys] + [train_CE_final, train_RE_final, val_CE, val_RE, duration]
             writer.writerow(row)
 
             if val_CE < best_val_CE:
@@ -180,12 +172,14 @@ def perform_grid_search(hyperparams, fixed_params=None):
     return best_model, best_params
 
 # Perform the first grid search
-print("Starting first grid search...")
-best_model_part1, best_params_part1 = perform_grid_search(hyperparams_part1)
+print("Starting first grid search...\n")
+best_model_part1, best_params_part1 = perform_grid_search(hyperparams_part1, filename="results/model_results_part1.csv")
 
 # Perform the second grid search using the best parameters from the first search
-print("Starting second grid search...")
-best_model_part2, best_params_part2 = perform_grid_search(hyperparams_part2, fixed_params=best_params_part1)
+print("Starting second grid search...\n")
+best_model_part2, best_params_part2 = perform_grid_search(hyperparams_part2, fixed_params=best_params_part1, filename="results/model_results_part2.csv")
+
+print("Grid search completed.\n")
 
 # Save the best parameters
 with open("best_model_params.json", "w") as f:
@@ -208,6 +202,7 @@ if lr_schedule_key == 'step':
 elif lr_schedule_key == 'exponential':
     lr_schedule = exponential_decay
 
+print("Training final model...")
 train_CEs, train_REs, _, duration = model.train(inputs, labels, None, None, alpha=best_params_part2['alpha'], eps=best_params_part2['eps'], early_stopping={'stop-early': False}, lr_schedule=lr_schedule, live_plot=False)
 
 test_CE, test_RE = model.test(test_inputs, test_labels)
