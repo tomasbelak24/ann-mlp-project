@@ -34,7 +34,7 @@ class MLPClassifier(MLP):
                     return lambda x: s(x)
             elif activation == 'tanh':
                 if derivative:
-                    return lambda x: 1 - x**2
+                    return lambda x: 1 - np.tanh(x)**2
                 else:
                     return lambda x: np.tanh(x)
             elif activation == 'relu':

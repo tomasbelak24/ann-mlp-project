@@ -33,8 +33,8 @@ val_labels = labels[val_indices]
 # First search with hyperparameters that could have big impact on the model
 hyperparams_part1 = {
     'dim_hid': [5, 10, 20, 50],
-    'alpha': [0.05, 0.005, 0.0005],
-    'eps': [150, 300],
+    'alpha': [0.01, 0.005, 0.001],
+    'eps': [50, 100, 200],
     'normalize': [True,],
     'hidden_activation': ['sigmoid', 'tanh', 'relu'],
     'output_activation': ['softmax']
@@ -43,7 +43,7 @@ hyperparams_part1 = {
 
 # Experimental hyperparameters for the second search to fine tune the model
 early_stopping_options = [{'stop-early': True, 'patience': 10, 'delta': 0}, {'stop-early': True, 'patience': 10, 'delta': 0.001},{'stop-early': False}]
-lr_schedule_options = [{'decay': 'exponential_decay', 'params': {'decay_rate': 0.01}}, {'decay': 'step_decay', 'params': {'drop': 0.8, 'epochs_drop': 30}}, {'decay': None}]
+lr_schedule_options = [{'decay': 'exponential_decay', 'params': {'decay_rate': 0.01}}, {'decay': 'step_decay', 'params': {'drop': 0.8, 'epochs_drop': 15}}, {'decay': None}]
 
 
 hyperparams_part2 = {
