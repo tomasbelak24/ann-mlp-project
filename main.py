@@ -34,15 +34,16 @@ val_labels = labels[val_indices]
 hyperparams_part1 = {
     'dim_hid': [5, 10, 20, 50],
     'alpha': [0.01, 0.005, 0.001],
-    'eps': [50, 100, 200],
+    'eps': [50, 150, 250],
     'normalize': [True,],
+    'early_stopping': [{'stop-early': True, 'patience': 15, 'delta': 0}],
     'hidden_activation': ['sigmoid', 'tanh', 'relu'],
     'output_activation': ['softmax']
 }
 
 
 # Experimental hyperparameters for the second search to fine tune the model
-early_stopping_options = [{'stop-early': True, 'patience': 10, 'delta': 0}, {'stop-early': True, 'patience': 10, 'delta': 0.001},{'stop-early': False}]
+early_stopping_options = [{'stop-early': True, 'patience': 15, 'delta': 0}, {'stop-early': True, 'patience': 15, 'delta': 0.001},{'stop-early': False}]
 lr_schedule_options = [{'decay': 'exponential_decay', 'params': {'decay_rate': 0.01}}, {'decay': 'step_decay', 'params': {'drop': 0.8, 'epochs_drop': 15}}, {'decay': None}]
 
 
@@ -167,6 +168,11 @@ def perform_grid_search(hyperparams, fixed_params=None, filename="model_results.
 # Perform the first grid search
 print("Starting first grid search...\n")
 best_model_part1, best_params_part1 = perform_grid_search(hyperparams_part1, filename="results/model_results_part1.csv")
+
+try:
+    del best_params_part1['early_stopping']
+except KeyError:
+    pass
 
 # Perform the second grid search using the best parameters from the first search
 print("Starting second grid search...\n")

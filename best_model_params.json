@@ -1,26 +1,30 @@
 {
     "part1": {
-        "dim_hid": 50,
-        "alpha": 0.01,
-        "eps": 200,
+        "dim_hid": 20,
+        "alpha": 0.005,
+        "eps": 250,
         "normalize": true,
-        "hidden_activation": "sigmoid",
+        "hidden_activation": "relu",
         "output_activation": "softmax"
     },
     "part2": {
         "lr_schedule": {
-            "decay": null
+            "decay": "step_decay",
+            "params": {
+                "drop": 0.8,
+                "epochs_drop": 15
+            }
         },
         "weight_init": "normal_dist",
-        "weight_scale": 2.0,
+        "weight_scale": 1.0,
         "early_stopping": {
             "stop-early": false
         },
-        "dim_hid": 50,
-        "alpha": 0.01,
-        "eps": 200,
+        "dim_hid": 20,
+        "alpha": 0.005,
+        "eps": 250,
         "normalize": true,
-        "hidden_activation": "sigmoid",
+        "hidden_activation": "relu",
         "output_activation": "softmax"
     }
 }
