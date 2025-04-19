@@ -17,6 +17,7 @@ class MLP:
         self.dim_hid = dim_hid
         self.dim_out = dim_out
 
+        # Set weight initialization parameters
         if weight_init == 'normal_dist':
             self.W_hid = np.random.randn(dim_hid, dim_in + 1) * weight_scale
             self.W_out = np.random.randn(dim_out, dim_hid + 1) * weight_scale
@@ -74,6 +75,8 @@ class MLP:
         y: output vector of network (size=dim_out)
         d: single target vector (size=dim_out)
         """
+        # if softmax_plus_ce is True, we assume that the output layer is softmax and the loss function is cross-entropy
+        # in this case, we do not need to compute the derivative of the softmax function
         if softmax_plus_ce:
             g_out = d - y
         else:

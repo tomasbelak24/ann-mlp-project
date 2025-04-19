@@ -2,7 +2,10 @@ import json
 import numpy as np
 from classifier import MLPClassifier
 import random
-from util import load_data, onehot_encode, int2str_labels, plot_errors, plot_dots, plot_confusion_matrix, plot_both_errors, plot_areas
+from util import load_data, int2str_labels, plot_confusion_matrix, plot_both_errors, plot_areas
+
+# Script used to adjust the plots of the best model
+# it should produce the same results as the main.py script
 
 random.seed(24)
 np.random.seed(24)
@@ -51,15 +54,17 @@ plot_both_errors(
 #plot_errors(errors=train_CEs, title="Error vs. Time (Cross-Entropy)", block=False, filename="/plots/train_CE_maybe.png")
 
 # Predict and plot outputs in 2D
-_, predicted = model.predict(inputs)
-predicted_str = int2str_labels(predicted)
-plot_dots(inputs, labels=int2str_labels(labels), predicted=predicted_str, title="2D Output - Training Data", block=False)
 
-# Plot confusion matrix
-plot_confusion_matrix(labels, predicted_str, num_classes=3, block=False)
 test_inputs, test_labels = load_data('data/2d.tst.dat')
-
 
 if best_params['normalize']:
     test_inputs = (test_inputs - mean) / std
+
+test_CE, test_RE = model.test(test_inputs, test_labels)
+print(f"Test CE: {test_CE * 100:.2f}%, Test RE: {test_RE:.5f}")
+
+_, predicted = model.predict(test_inputs)
+predicted_str = int2str_labels(predicted)
+
+plot_confusion_matrix(test_labels, predicted_str, num_classes=3, block=False)
 plot_areas(model, test_inputs, test_labels)

@@ -22,18 +22,22 @@ def plot_val_errors(val_CEs,title, block=True):
     plt.legend()
     plt.show()
 
+# function to load data from file and returns inputs and labels converted to integers
+# (A=0, B=1, C=2)
 def load_data(file_path):
     data = np.genfromtxt(file_path, dtype=[('x', float), ('y', float), ('label', 'U1')])[1:]
     inputs = np.array([[row[0], row[1]] for row in data]).T
     labels = np.array([row[2] for row in data])
     return inputs, str2int_labels(labels)
 
-
+# label conversion functions
+# convert string labels to integers (A=0, B=1, C=2)
 def str2int_labels(str_labels):
     label_map = {'A': 0, 'B': 1, 'C': 2}
     int_labels = np.array([label_map[label] for label in str_labels])
     return int_labels
 
+# convert integer labels back to strings (0=A, 1=B, 2=C)
 def int2str_labels(int_labels):
     label_map = {0: 'A', 1: 'B', 2: 'C'}
     str_labels = np.array([label_map[label] for label in int_labels])
@@ -64,7 +68,7 @@ def plot_confusion_matrix(y_true, y_pred, num_classes=3, normalize=True,
     ax.set_yticklabels(['A', 'B', 'C'])
 
     for (i, j), val in np.ndenumerate(conf_matrix):
-        text = f'{val:.2f}' if normalize else f'{int(val)}'
+        text = f'{val * 100:.2f}%' if normalize else f'{int(val)}'
         ax.text(j, i, text, ha='center', va='center', color='black')
 
     plt.title('Confusion Matrix')

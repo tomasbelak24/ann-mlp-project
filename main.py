@@ -5,6 +5,7 @@ from util import *
 import json
 import csv
 
+# set random seed for reproducibility
 random.seed(24)
 np.random.seed(24)
 show_graphs = True
@@ -57,7 +58,7 @@ hyperparams_part2 = {
 }
 
 
-# hyperparams for testing
+# hyperparams for quick testing
 """ hyperparams_part1 = {
     'dim_hid': [10,],
     'alpha': [0.01,],
@@ -77,14 +78,15 @@ hyperparams_part2 = {
 
 
 # Function to perform grid search
+# logs results to a CSV file
+# returns the best model and its parameters
+
 def perform_grid_search(hyperparams, fixed_params=None, filename="model_results.csv"):
     best_val_CE = float('inf')
     best_model = None
     best_params = None
-    seen_configs = set()
+    seen_configs = set() # to avoid duplicate configurations
 
-    #print(f"Hyperparameters: {hyperparams}")
-    #print(f"Fixed parameters: {fixed_params}")
 
     keys = list(hyperparams.keys())
     all_keys = list(fixed_params.keys()) + list(hyperparams.keys()) if fixed_params else list(keys)
@@ -101,22 +103,28 @@ def perform_grid_search(hyperparams, fixed_params=None, filename="model_results.
             if fixed_params:
                 hp.update(fixed_params)
 
+            # Remove sparsity if weight_init is not sparse
             if hp.get('weight_init') != 'sparse':
                 try:
                     del hp['sparsity']
                 except KeyError:
                     pass
-
+            
+            # creates json out of the hyperparameters to use as a key for the seen_configs set
+            # this is to avoid duplicate configurations
             hp_key = json.dumps(hp, sort_keys=True)
             if hp_key in seen_configs:
                 continue
             seen_configs.add(hp_key)
 
 
+            # Normalize inputs if wanted
             x_train = (train_inputs - mean) / std if hp['normalize'] else train_inputs
             x_val = (val_inputs - mean) / std if hp['normalize'] else val_inputs
 
             print(f"{i_model}. Training with hyperparameters: {hp}")
+            
+            #Model initialization
             model = MLPClassifier(
                 dim_in=x_train.shape[0],
                 dim_hid=hp['dim_hid'],
@@ -128,10 +136,11 @@ def perform_grid_search(hyperparams, fixed_params=None, filename="model_results.
                 weight_scale=hp.get('weight_scale', 1.0)
             )
 
+            # reading lr_schedule and early_stopping from hyperparameters
             lr_schedule = hp.get('lr_schedule', {'decay': None})
-            #lr_schedule = lr_schedule_mapping.get(lr_schedule_key, None)
             use_early_stopping = hp.get('early_stopping', {}).get('stop-early', False)
 
+            # train the model with the given hyperparameters
             train_CEs, train_REs, val_CEs, duration = model.train(
                 x_train, train_labels,
                 val_inputs=x_val if use_early_stopping else None,
@@ -155,7 +164,6 @@ def perform_grid_search(hyperparams, fixed_params=None, filename="model_results.
             val_CE, val_RE = model.test(x_val, val_labels)
             print(f"Val CE: {val_CE * 100:.2f}%, Val RE: {val_RE:.5f}\n")
 
-            #print(hp)
             row = [i_model, ] + [hp.get(k) for k in all_keys] + [train_CE_final, train_RE_final, val_CE, val_RE, duration]
             writer.writerow(row)
 
@@ -181,13 +189,15 @@ best_model_part2, best_params_part2 = perform_grid_search(hyperparams_part2, fix
 
 print("Grid search completed.\n")
 
-# Save the best parameters
+# Save the best parameters to json
 with open("best_model_params.json", "w") as f:
     json.dump({"part1": best_params_part1, "part2": best_params_part2}, f, indent=4)
 
-print(f"Best parameters from part 1: {best_params_part1}")
-print(f"Best parameters from part 2: {best_params_part2}")
+#print(f"Best parameters from part 1: {best_params_part1}")
+#print(f"Best parameters from part 2: {best_params_part2}")
 
+
+# Testing the best model on the test set
 test_inputs, test_labels = load_data('data/2d.tst.dat')
 
 model = best_model_part2
@@ -199,14 +209,12 @@ lr_schedule = best_params_part2.get('lr_schedule', {'decay': None})
 
 print("Training final model...")
 train_CEs, train_REs, _, duration = model.train(inputs, labels, None, None, alpha=best_params_part2['alpha'], eps=best_params_part2['eps'], early_stopping={'stop-early': False}, lr_schedule=lr_schedule, live_plot=False)
-plot_both_errors(
-    train_CEs, train_REs,
-    block=False,
-)
+
+plot_both_errors(train_CEs, train_REs,block=False)
 
 test_CE, test_RE = model.test(test_inputs, test_labels)
-
 print(f"Test CE: {test_CE * 100:.2f}%, Test RE: {test_RE:.5f}")
+
 _, train_predicted = model.predict(inputs)
 train_predicted = int2str_labels(train_predicted)
 _, test_predicted  = model.predict(test_inputs)
@@ -214,7 +222,6 @@ test_predicted = int2str_labels(test_predicted)
 
 
 plot_confusion_matrix(test_labels, test_predicted, num_classes=3, block=False, filename='plots/confusion_matrix_test.png', show=show_graphs)
-
 plot_dots(inputs = test_inputs, labels = int2str_labels(test_labels), block=False, filename='plots/test_data.png', show=show_graphs)
 plot_dots(inputs = inputs, labels = int2str_labels(labels), predicted = train_predicted, test_inputs=test_inputs, test_labels=int2str_labels(test_labels), test_predicted=test_predicted, block=False, filename='plots/train_data_predicted.png', show=show_graphs)
 plot_dots(inputs = None, test_inputs=test_inputs, test_labels=int2str_labels(test_labels), test_predicted=test_predicted, title='Test data only', block=False, filename='plots/test_data_predicted.png', show=show_graphs)
