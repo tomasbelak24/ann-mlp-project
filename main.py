@@ -10,6 +10,7 @@ np.random.seed(24)
 show_graphs = True
 
 inputs, labels = load_data('data/2d.trn.dat')
+#plot_dots(inputs = inputs, labels = int2str_labels(labels), block=False, filename='plots/train_data.png', show=show_graphs)
 mean = np.mean(inputs, axis=1, keepdims=True)
 std = np.std(inputs, axis=1, keepdims=True)
 
@@ -198,6 +199,10 @@ lr_schedule = best_params_part2.get('lr_schedule', {'decay': None})
 
 print("Training final model...")
 train_CEs, train_REs, _, duration = model.train(inputs, labels, None, None, alpha=best_params_part2['alpha'], eps=best_params_part2['eps'], early_stopping={'stop-early': False}, lr_schedule=lr_schedule, live_plot=False)
+plot_both_errors(
+    train_CEs, train_REs,
+    block=False,
+)
 
 test_CE, test_RE = model.test(test_inputs, test_labels)
 
@@ -207,11 +212,10 @@ train_predicted = int2str_labels(train_predicted)
 _, test_predicted  = model.predict(test_inputs)
 test_predicted = int2str_labels(test_predicted)
 
-plot_errors(title="Error (%) vs. Time (Training CE)",errors=train_CEs, test_error=test_CE, block=False, filename='plots/train_CE.png', show=show_graphs)
 
 plot_confusion_matrix(test_labels, test_predicted, num_classes=3, block=False, filename='plots/confusion_matrix_test.png', show=show_graphs)
 
 plot_dots(inputs = test_inputs, labels = int2str_labels(test_labels), block=False, filename='plots/test_data.png', show=show_graphs)
 plot_dots(inputs = inputs, labels = int2str_labels(labels), predicted = train_predicted, test_inputs=test_inputs, test_labels=int2str_labels(test_labels), test_predicted=test_predicted, block=False, filename='plots/train_data_predicted.png', show=show_graphs)
 plot_dots(inputs = None, test_inputs=test_inputs, test_labels=int2str_labels(test_labels), test_predicted=test_predicted, title='Test data only', block=False, filename='plots/test_data_predicted.png', show=show_graphs)
-plot_decision_boundary(model, inputs, labels, 'Decision Boundaries of final model', filename='plots/decision_boundary.png', show=show_graphs)
+plot_decision_boundary(model, test_inputs, test_labels, 'Decision Boundaries of final model', filename='plots/decision_boundary.png', show=show_graphs)

@@ -43,6 +43,7 @@ def plot_decision_boundary(model, inputs, labels, title, filename=None, show=Tru
     else:
         plt.close()
 
+
 def plot_val_errors(val_CEs,title, block=True):
     plt.plot(val_CEs, label="Validation Loss")
     plt.xlabel("Epochs")
@@ -260,7 +261,7 @@ def plot_both_errors(trainCEs, trainREs, testCE=None, testRE=None, pad=None, blo
 
     plt.subplot(2, 1, 2)
     plt.ylim(bottom=0, top=1)
-    plt.title('Model loss [MSE/sample]')
+    plt.title('Model loss [Cross-entropy]')
     plt.plot(trainREs, label='train set')
 
     if testRE is not None:
