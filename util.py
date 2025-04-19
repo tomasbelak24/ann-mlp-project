@@ -13,37 +13,7 @@ import os
 import time
 import functools
 
-
-def plot_decision_boundary(model, inputs, labels, title, filename=None, show=True):
-    # Create a grid
-    x_min, x_max = inputs[0, :].min() - 1, inputs[0, :].max() + 1
-    y_min, y_max = inputs[1, :].min() - 1, inputs[1, :].max() + 1
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
-                         np.arange(y_min, y_max, 0.1))
-
-    # Predict for each point in grid
-    grid_inputs = np.c_[xx.ravel(), yy.ravel()].T
-    _, Z = model.predict(grid_inputs)
-    Z = Z.reshape(xx.shape)
-
-    # Plot
-    plt.figure(figsize=(10, 8))
-    plt.contourf(xx, yy, Z, alpha=0.4, cmap='viridis')
-    scatter = plt.scatter(inputs[0, :], inputs[1, :], c=labels, s=20, edgecolor='k', cmap='viridis')
-    plt.xlabel('Feature 1')
-    plt.ylabel('Feature 2')
-    plt.title(title)
-    plt.colorbar(scatter, ticks=[0, 1, 2], label='Class (0=A, 1=B, 2=C)')
-
-    # Save or show plot
-    if filename:
-        plt.savefig(filename, bbox_inches='tight')
-    if show:
-        plt.show()
-    else:
-        plt.close()
-
-
+# another function to plot errors as the one already implemented was lagging
 def plot_val_errors(val_CEs,title, block=True):
     plt.plot(val_CEs, label="Validation Loss")
     plt.xlabel("Epochs")
@@ -69,7 +39,7 @@ def int2str_labels(int_labels):
     str_labels = np.array([label_map[label] for label in int_labels])
     return str_labels
 
-
+# generated function that plots confusion matrix
 def plot_confusion_matrix(y_true, y_pred, num_classes=3, normalize=True, 
                           filename=None, show=True, block=False):
     
@@ -342,46 +312,41 @@ def plot_dots(inputs, labels=None, predicted=None, test_inputs=None, test_labels
         plt.close()
 
 
-def plot_areas(model, inputs, labels=None, w=30, h=20, i_x=0, i_y=1, block=True):
-    plt.figure(4)
-    use_keypress()
-    plt.clf()
-    plt.gcf().canvas.manager.set_window_title('Decision areas')
+def plot_areas(model, inputs, labels=None, title="Decision Boundary", w=300, h=300, i_x=0, i_y=1, filename=None, show=True):
 
+    # Create a grid for plotting
+    x_min, x_max = inputs[i_x, :].min() - 1, inputs[i_x, :].max() + 1
+    y_min, y_max = inputs[i_y, :].min() - 1, inputs[i_y, :].max() + 1
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, w),
+                         np.linspace(y_min, y_max, h))
+
+    # Prepare input grid for model
     dim = inputs.shape[0]
-    data = np.zeros((dim, w*h))
+    data = np.tile(np.mean(inputs, axis=1, keepdims=True), (1, w * h))
+    data[i_x, :] = xx.ravel()
+    data[i_y, :] = yy.ravel()
 
-    # # "proper":
-    # X = np.linspace(*limits(inputs[i_x,:]), w)
-    # Y = np.linspace(*limits(inputs[i_y,:]), h)
-    # YY, XX = np.meshgrid(Y, X)
-    #
-    # for i in range(dim):
-    #     data[i,:] = np.mean(inputs[i,:])
-    # data[i_x,:] = XX.flat
-    # data[i_y,:] = YY.flat
-
-    X1 = np.linspace(*limits(inputs[0, :]), w)
-    Y1 = np.linspace(*limits(inputs[1, :]), h)
-    X2 = np.linspace(*limits(inputs[2, :]), w)
-    Y2 = np.linspace(*limits(inputs[3, :]), h)
-    YY1, XX1 = np.meshgrid(Y1, X1)
-    YY2, XX2 = np.meshgrid(Y2, X2)
-    data[0, :] = XX1.flat
-    data[1, :] = YY1.flat
-    data[2, :] = XX2.flat
-    data[3, :] = YY2.flat
-
+    # Predict on the grid
     outputs, *_ = model.predict(data)
-    assert outputs.shape[0] == model.dim_out,\
-           f'Outputs do not have correct shape, expected ({model.dim_out}, ?), got {outputs.shape}'
-    outputs = outputs.reshape((-1, w, h))
+    preds = np.argmax(outputs, axis=0).reshape(xx.shape)
 
-    outputs -= np.min(outputs, axis=0, keepdims=True)
-    outputs = np.exp(1*outputs)
-    outputs /= np.sum(outputs, axis=0, keepdims=True)
+    # Plot background and decision boundaries
+    plt.figure(figsize=(10, 8))
+    plt.contourf(xx, yy, preds, alpha=0.4, cmap='viridis')
+    plt.contour(xx, yy, preds, levels=np.unique(preds), colors='k', linewidths=1)
 
-    plt.imshow(outputs.T)
+    # Scatter original input data
+    if labels is not None:
+        plt.scatter(inputs[i_x, :], inputs[i_y, :], c=labels, s=20, edgecolor='k', cmap='viridis')
 
-    plt.tight_layout()
-    plt.show(block=block)
+    plt.xlabel(f'Feature {i_x + 1}')
+    plt.ylabel(f'Feature {i_y + 1}')
+    plt.title(title)
+
+    if filename:
+        plt.savefig(filename, bbox_inches='tight')
+    if show:
+        plt.show()
+    else:
+        plt.close()
+

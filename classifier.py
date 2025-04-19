@@ -123,9 +123,7 @@ class MLPClassifier(MLP):
             if val_inputs is None or val_labels is None:
                 raise ValueError("Validation data must be provided for early stopping.")
         
-        #print(lr_schedule)
         lr_schedule_active = lr_schedule.get('decay', None) is not None
-        #print(f"lr_schedule_active: {lr_schedule_active}")
         
         if lr_schedule_active:
 
@@ -146,7 +144,6 @@ class MLPClassifier(MLP):
             }
             
             lr_params = lr_schedule.get('params', {})
-            #print(lr_schedule['decay'])
             decay_function = lr_schedule_mapping[lr_schedule['decay']]
 
         for ep in range(eps):
@@ -154,10 +151,7 @@ class MLPClassifier(MLP):
             RE = 0
 
             if lr_schedule_active:
-                #print("lr scheduling works...")
-                #print('povodna alfa:', alpha)
                 alpha = decay_function(ep, alpha, lr_params)
-                #print('nova alpha:', alpha)
 
             for idx in np.random.permutation(count):
                 x = inputs[:, idx]

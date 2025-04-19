@@ -218,4 +218,4 @@ plot_confusion_matrix(test_labels, test_predicted, num_classes=3, block=False, f
 plot_dots(inputs = test_inputs, labels = int2str_labels(test_labels), block=False, filename='plots/test_data.png', show=show_graphs)
 plot_dots(inputs = inputs, labels = int2str_labels(labels), predicted = train_predicted, test_inputs=test_inputs, test_labels=int2str_labels(test_labels), test_predicted=test_predicted, block=False, filename='plots/train_data_predicted.png', show=show_graphs)
 plot_dots(inputs = None, test_inputs=test_inputs, test_labels=int2str_labels(test_labels), test_predicted=test_predicted, title='Test data only', block=False, filename='plots/test_data_predicted.png', show=show_graphs)
-plot_decision_boundary(model, test_inputs, test_labels, 'Decision Boundaries of final model', filename='plots/decision_boundary.png', show=show_graphs)
+plot_areas(model, test_inputs, test_labels, 'Decision Boundaries of final model', filename='plots/decision_boundary.png', show=show_graphs)

@@ -75,16 +75,12 @@ class MLP:
         d: single target vector (size=dim_out)
         """
         if softmax_plus_ce:
-            # Use simplified gradient for softmax + cross-entropy
             g_out = d - y
         else:
-        # Compute output layer gradient vector (dim_out,)
             g_out = (d - y) * self.df_out(b)
         
-        # Compute hidden layer gradient vector (dim_hid,), ignoring bias weights in W_out
         g_hid = (self.W_out[:, :-1].T @ g_out) * self.df_hid(a)
         
-        # Compute weight gradient matrices with outer products
         dW_out = np.outer(g_out, add_bias(h))
         dW_hid = np.outer(g_hid, add_bias(x))
 

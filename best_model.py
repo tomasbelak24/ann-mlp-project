@@ -2,7 +2,7 @@ import json
 import numpy as np
 from classifier import MLPClassifier
 import random
-from util import load_data, onehot_encode, int2str_labels, plot_errors, plot_dots, plot_confusion_matrix, plot_both_errors, plot_decision_boundary
+from util import load_data, onehot_encode, int2str_labels, plot_errors, plot_dots, plot_confusion_matrix, plot_both_errors, plot_areas
 
 random.seed(24)
 np.random.seed(24)
@@ -62,4 +62,4 @@ test_inputs, test_labels = load_data('data/2d.tst.dat')
 
 if best_params['normalize']:
     test_inputs = (test_inputs - mean) / std
-plot_decision_boundary(model, test_inputs, test_labels, 'Decision Boundaries of final model', show=True)
+plot_areas(model, test_inputs, test_labels)
